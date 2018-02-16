@@ -13,7 +13,7 @@ struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
-
+int mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
 void
 tvinit(void)
 {
@@ -46,6 +46,16 @@ trap(struct trapframe *tf)
     return;
   }
 
+  if (tf->trapno == T_PGFLT)
+  {
+    pte_t * pgdir = myproc()->pgdir;
+    uint addr = PGROUNDDOWN(rcr2());
+    void * mem = kalloc();
+    uint perms = PTE_W | PTE_U;
+    mappages(pgdir, (char*) addr, PGSIZE, V2P(mem), perms);
+    return;
+  }
+  
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
     if(cpuid() == 0){
