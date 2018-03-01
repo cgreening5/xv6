@@ -6,6 +6,16 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "pstat.h"
+
+extern int systemCallCount;
+extern struct pstat pinfo;
+
+int
+sys_getSysCallInfo(void)
+{
+  return systemCallCount;
+}
 
 int
 sys_fork(void)
@@ -42,6 +52,32 @@ sys_getpid(void)
   return myproc()->pid;
 }
 
+
+//My implementation of sys_sbrk
+/*
+This implementation should only increment the proc->sz by n bytes & return the old size
+Should NOT allocate memory, deleting growproc, but still need to increase process' size
+*/
+
+int
+sys_sbrk(void)
+{
+	int addr;
+	int n;
+
+	if(argint(0,&n) < 0)
+		return -1;
+	addr = myproc()->sz;
+
+	//if(growproc(n)<0)
+	//	return -1;
+	myproc()->sz += n;
+	
+	return addr;
+}
+
+//Original implementation of sys_sbrk
+/*
 int
 sys_sbrk(void)
 {
@@ -55,6 +91,8 @@ sys_sbrk(void)
     return -1;
   return addr;
 }
+*/
+
 
 int
 sys_sleep(void)
@@ -89,3 +127,20 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+/*  Assignment 3 additions.
+	Two system calls
+*/
+int
+sys_settickets(void)
+{
+	return 0;
+}
+
+int
+sys_getpinfo(struct pstat *p)
+{
+	p = &pinfo;
+	return 0;
+}
+
+//End of assignment 3 additions

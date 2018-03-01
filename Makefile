@@ -174,6 +174,10 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_testSystemCallInfo\
+	_testMalloc\
+	_graph\
+	_ps\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
