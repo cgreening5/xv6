@@ -20,6 +20,10 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+int totaltickets;
+
+struct spinlock addticketlock;
+
 void
 pinit(void)
 {
@@ -111,6 +115,8 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+
+  p->numtickets = 1;
 
   return p;
 }
@@ -531,4 +537,17 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int addtickets(int tickets)
+{
+  int result = -1;
+  acquire(&addticketlock);
+  if (totaltickets + tickets < 0)
+  {
+    totaltickets += tickets; 
+    result = 0;
+  }
+  release(&addticketlock);
+  return result;
 }

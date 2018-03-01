@@ -90,8 +90,16 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_settickets(int numtickets)
+int sys_settickets()
 {
+  int numtickets;
+  if(argint(0, &numtickets) < 0)
+    return -1;
+
+  if (numtickets < 0)
+    return -1;
+
+  addtickets(numtickets - myproc()->numtickets);
   myproc()->numtickets = numtickets;
   return 0;
 }

@@ -17,6 +17,7 @@ void test(int result)
 void testNumTickets()
 {
 	test(!settickets(10));	
+	test(settickets(-1) != 0);
 }
 
 int main()
