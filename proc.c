@@ -7,7 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 #include "pstat.h"
-struct pstat pinfo;
+pstat pinfo;
 
 struct {
   struct spinlock lock;
@@ -367,10 +367,7 @@ void
 scheduler(void)
 {
   struct proc *p;
-  struct proc *x;
-	int numProc;
-
-	struct cpu *c = mycpu();
+struct cpu *c = mycpu();
   c->proc = 0;
 
   for(;;){
@@ -379,13 +376,16 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-	numProc = 0;
-	for(x = ptable.proc; p < &ptable.proc[NPROC]; x++)
-	{
-		pinfo.inuse[numProc] = ptable.proc[numProc].state;
-		numProc++;	
-	}
-	
+	/*
+        int numProc = 0;
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+        {
+                pinfo.inuse[numProc] = p->state;
+                numProc++;
+        }
+        //End addition
+
+	*/
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)

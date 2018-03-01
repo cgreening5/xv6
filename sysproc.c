@@ -9,7 +9,7 @@
 #include "pstat.h"
 
 extern int systemCallCount;
-extern struct pstat pinfo;
+extern pstat pinfo;
 
 int
 sys_getSysCallInfo(void)
@@ -137,9 +137,9 @@ sys_settickets(void)
 }
 
 int
-sys_getpinfo(struct pstat *p)
+sys_getpinfo(pstat *p)
 {
-	p = &pinfo;
+	memmove(p,&pinfo,sizeof(pstat));
 	return 0;
 }
 
