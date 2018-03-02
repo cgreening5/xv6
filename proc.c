@@ -14,6 +14,8 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+extern int sys_uptime();
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -321,10 +323,18 @@ static int counttickets()
 {
   int totaltickets = 0;
   for(struct proc * p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    totaltickets += p->numtickets;
+    if (p->state == RUNNABLE)
+    {
+    	totaltickets += p->numtickets;
+    }
   }
 
   return totaltickets;
+}
+
+static int getrandomticket()
+{
+  return sys_uptime();
 }
 
 //PAGEBREAK: 42
@@ -349,10 +359,14 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     int totaltickets = counttickets();
+    int winningticket = getrandomticket() % totaltickets;
+    int currticket = 0;
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if (p->state != RUNNABLE)
         continue;
 
+      currticket += p->numtickets;
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
