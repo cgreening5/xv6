@@ -21,10 +21,6 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
-struct node * hiqueue[NPROC];
-struct node * loqueue[NPROC];
-int hiqsize = 0;
-int loqsize = 0;
 struct spinlock qlock;
 
 static struct proc *initproc;
@@ -52,21 +48,6 @@ lcg( )
 	}
 	lcgSeed = ret;
 	return ret;
-}
-
-//Add/remove/change queues
-void enqueuehighpriority(struct proc * p)
-{
-  acquire(&qlock);
-  hiqueue[hiqsize++] == p;
-  release(&qlock);
-}
-
-void dequeuehighpriority(struct proc * p)
-{
-  acquire(&lock); 
-    
-  release(&qlock);
 }
 
 void
@@ -270,10 +251,6 @@ fork(void)
   np->state = RUNNABLE;
 
   release(&ptable.lock);
-
-  acquire(&qlock);
-  hiqueue[hiqsize++] = np;
-  release(&qlock);
 
   return pid;
 }
