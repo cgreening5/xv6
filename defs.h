@@ -121,7 +121,6 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
-int		getSysCallInfo(void);
 int		settickets(int);
 int		getpinfo(struct pstat*);
 

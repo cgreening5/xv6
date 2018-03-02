@@ -123,27 +123,8 @@ sys_uptime(void)
 /*  Assignment 3 additions.
 	Two system calls
 */
-int
-sys_settickets(void)
-{
-	return 0;
-}
 
-int
-sys_getpinfo(void)
-{
-	pstat * p;
-
-	if(argint(0, (int*)&p) < 0)
-		return -1;
-	memmove(p,&pinfo,sizeof(pstat));
-	cprintf("Does this work?\n");
-	return 0;
-}
-
-//End of assignment 3 additions
-
-int sys_settickets()
+int sys_settickets(void)
 {
   int numtickets;
   if(argint(0, &numtickets) < 0)
@@ -155,3 +136,19 @@ int sys_settickets()
   myproc()->numtickets = numtickets;
   return 0;
 }
+
+
+int
+sys_getpinfo(void)
+{
+        pstat * p;
+
+        if(argint(0, (int*)&p) < 0)
+                return -1;
+        memmove(p,&pinfo,sizeof(pstat));
+        cprintf("Does this work?\n");
+        return 0;
+}
+
+//End of assignment 3 additions
+
