@@ -14,12 +14,18 @@ pstat pinfo;
 int lcgSeed = 45;
 int lcgMultiplier = 1103515245;
 int lcgIncrement = 12345;
-
+uint modulus = 0xFFFFFFFF - 1;
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
+
+struct node * hiqueue[NPROC];
+struct node * loqueue[NPROC];
+int hiqsize = 0;
+int loqsize = 0;
+struct spinlock qlock;
 
 static struct proc *initproc;
 
@@ -33,7 +39,7 @@ int systemCallCount = 0;
 
 //Linear Congruential PRNG  (aX + c)%m
 int
-lcg(int modulus)
+lcg( )
 {
 	if (modulus == 0)
 	{
@@ -46,6 +52,21 @@ lcg(int modulus)
 	}
 	lcgSeed = ret;
 	return ret;
+}
+
+//Add/remove/change queues
+void enqueuehighpriority(struct proc * p)
+{
+  acquire(&qlock);
+  hiqueue[hiqsize++] == p;
+  release(&qlock);
+}
+
+void dequeuehighpriority(struct proc * p)
+{
+  acquire(&lock); 
+    
+  release(&qlock);
 }
 
 void
@@ -250,6 +271,10 @@ fork(void)
 
   release(&ptable.lock);
 
+  acquire(&qlock);
+  hiqueue[hiqsize++] = np;
+  release(&qlock);
+
   return pid;
 }
 
@@ -343,55 +368,6 @@ wait(void)
   }
 }
 
-
-//PAGEBREAK: 42
-// Per-CPU process scheduler.
-// Each CPU calls scheduler() after setting itself up.
-// Scheduler never returns.  It loops, doing:
-//  - choose a process to run
-//  - swtch to start running that process
-//  - eventually that process transfers control
-//      via swtch back to the scheduler.
-
-/*
-void
-scheduler(void)
-{
-  struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
-  
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
-
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    int totaltickets = counttickets();
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
-    }
-    release(&ptable.lock);
-
-  }
-}
-*/
-
 int counttickets()
 {
   int total = 0;
@@ -403,12 +379,11 @@ int counttickets()
   return total;
 }
 
-//My implementation of the scheduler
 void
 scheduler(void)
 {
   struct proc *p;
-struct cpu *c = mycpu();
+  struct cpu *c = mycpu();
   c->proc = 0;
 
   for(;;){
@@ -427,31 +402,36 @@ struct cpu *c = mycpu();
 
       numProc++;
     }
-    
-    int winningticket = lcg(counttickets());
-    int currticket = 0;
- 	
+   
+    int totaltickets = counttickets();
+    int winningticket = totaltickets == 0 ? 0 : lcg() % totaltickets;
+
+    int count = 0;
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
 
-      currticket += p->numtickets;
-      if (winningticket < currticket)
-        continue;
+      count += p->numtickets;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      if (winningticket < count)
+      {
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+	break;
+      }
     }
     release(&ptable.lock);
 

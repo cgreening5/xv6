@@ -20,9 +20,10 @@ int main()
 	
 	//success++;
 
+	printf(1, "Inuse   pid     hticks  lticks\n");
 	for(i = 0; i < NPROC; i++)
 	{
-		printf(1,"inuse: %d %d %d %d\n",ps->inuse[i],ps->pid[i],ps->hticks[i],ps->lticks[i]);		
+		printf(1,"%d       %d       %d       %d\n",ps->inuse[i],ps->pid[i],ps->hticks[i],ps->lticks[i]);		
 		
 	}
 
