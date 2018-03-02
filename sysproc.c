@@ -140,6 +140,7 @@ int
 sys_getpinfo(pstat *p)
 {
 	memmove(p,&pinfo,sizeof(pstat));
+	cprintf("Does this work?\n");
 	return 0;
 }
 

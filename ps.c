@@ -9,16 +9,16 @@
 int main()
 {
 	//int i = 0;
-	pstat * ps = malloc(sizeof(pstat));
-	int success = -1;
+	//pstat * ps = malloc(sizeof(pstat));
+	//int success = -1;
 	
 
 	//printf(1,"%x\n",ps);
-	success = getpinfo(ps);
+	//success = getpinfo(ps);
 	//printf(1,"%x\n",ps);
 
 	
-	success++;
+	//success++;
 	/*
 	for(i = 0; i < NPROC; i++)
 	{

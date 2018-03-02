@@ -7,7 +7,14 @@
 #include "proc.h"
 #include "spinlock.h"
 #include "pstat.h"
+
 pstat pinfo;
+
+//Variables for a linear congruential PRNG
+int lcgSeed = 45;
+int lcgMultiplier = 1103515245;
+int lcgIncrement = 12345;
+
 
 struct {
   struct spinlock lock;
@@ -23,6 +30,19 @@ extern void trapret(void);
 static void wakeup1(void *chan);
 
 int systemCallCount = 0;
+
+//Linear Congruential PRNG  (aX + c)%m
+int
+lcg(int modulus)
+{
+	int ret = (lcgMultiplier*lcgSeed + lcgIncrement)%modulus;
+	if(ret < 0)
+	{
+		ret *= -1;
+	}
+	lcgSeed = ret;
+	return ret;
+}
 
 void
 pinit(void)
@@ -376,17 +396,18 @@ struct cpu *c = mycpu();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-	/*
         int numProc = 0;
         for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
         {
                 pinfo.inuse[numProc] = p->state;
-                numProc++;
-        }
-        //End addition
+                pinfo.pid[numProc] = p->pid;
+		pinfo.hticks[numProc] = -1;
+		pinfo.lticks[numProc] = -1;
 
-	*/
-
+		numProc++;
+	}
+	
+	
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -394,7 +415,7 @@ struct cpu *c = mycpu();
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
+	c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
 
