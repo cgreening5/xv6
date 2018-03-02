@@ -99,7 +99,6 @@ int sys_settickets()
   if (numtickets < 0)
     return -1;
 
-  addtickets(numtickets - myproc()->numtickets);
   myproc()->numtickets = numtickets;
   return 0;
 }
