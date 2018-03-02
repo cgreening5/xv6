@@ -103,13 +103,8 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_getSysCallInfo(void);
 extern int sys_settickets(void);
 extern int sys_getpinfo(void);
-
-//Number of system calls, extern systemCallCount points to a variable inside proc.c
-//incremented as traps are raised at (syscall(void))
-extern int systemCallCount;
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -133,9 +128,8 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_getSysCallInfo]    sys_getSysCallInfo,
-[SYS_settickets]	sys_settickets,
 [SYS_getpinfo]	sys_getpinfo,
+[SYS_settickets] sys_settickets,
 };
 
 void
@@ -147,7 +141,6 @@ syscall(void)
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     curproc->tf->eax = syscalls[num]();
-    systemCallCount++;
   } else {
     cprintf("%d %s: unknown sys call %d\n",
             curproc->pid, curproc->name, num);

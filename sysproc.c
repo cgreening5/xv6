@@ -8,14 +8,7 @@
 #include "proc.h"
 #include "pstat.h"
 
-extern int systemCallCount;
 extern pstat pinfo;
-
-int
-sys_getSysCallInfo(void)
-{
-  return systemCallCount;
-}
 
 int
 sys_fork(void)
@@ -145,3 +138,16 @@ sys_getpinfo(pstat *p)
 }
 
 //End of assignment 3 additions
+
+int sys_settickets()
+{
+  int numtickets;
+  if(argint(0, &numtickets) < 0)
+    return -1;
+
+  if (numtickets < 0)
+    return -1;
+
+  myproc()->numtickets = numtickets;
+  return 0;
+}

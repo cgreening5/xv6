@@ -24,7 +24,6 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int getSysCallInfo(void);
 int settickets(int num);
 int getpinfo(struct pstat*);
 

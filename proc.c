@@ -16,6 +16,8 @@ int lcgMultiplier = 1103515245;
 int lcgIncrement = 12345;
 
 
+#define INITIAL_TICKETS 1
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -135,6 +137,10 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+
+  
+  p->numtickets = INITIAL_TICKETS;
+  addtickets(INITIAL_TICKETS);
 
   return p;
 }
@@ -335,6 +341,16 @@ wait(void)
   }
 }
 
+static int counttickets()
+{
+  int totaltickets = 0;
+  for(struct proc * p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    totaltickets += p->numtickets;
+  }
+
+  return totaltickets;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -358,6 +374,7 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    int totaltickets = counttickets();
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
