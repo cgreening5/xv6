@@ -35,6 +35,10 @@ int systemCallCount = 0;
 int
 lcg(int modulus)
 {
+	if (modulus == 0)
+	{
+		return 0;
+	}
 	int ret = (lcgMultiplier*lcgSeed + lcgIncrement)%modulus;
 	if(ret < 0)
 	{
@@ -165,6 +169,7 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+  p->numtickets = 1;
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -387,6 +392,17 @@ scheduler(void)
 }
 */
 
+int counttickets()
+{
+  int total = 0;
+  for (struct proc * p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if (p->state == RUNNABLE){
+      total += p->numtickets;
+    }
+  }
+  return total;
+}
+
 //My implementation of the scheduler
 void
 scheduler(void)
@@ -401,26 +417,32 @@ struct cpu *c = mycpu();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-        int numProc = 0;
-        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-        {
-                pinfo.inuse[numProc] = p->state;
-                pinfo.pid[numProc] = p->pid;
-		pinfo.hticks[numProc] = -1;
-		pinfo.lticks[numProc] = -1;
+    int numProc = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    {
+      pinfo.inuse[numProc] = p->state;
+      pinfo.pid[numProc] = p->pid;
+      pinfo.hticks[numProc] = -1;
+      pinfo.lticks[numProc] = -1;
 
-		numProc++;
-	}
-	
-	
+      numProc++;
+    }
+    
+    int winningticket = lcg(counttickets());
+    int currticket = 0;
+ 	
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
+        continue;
+
+      currticket += p->numtickets;
+      if (winningticket < currticket)
         continue;
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-	c->proc = p;
+      c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
 
