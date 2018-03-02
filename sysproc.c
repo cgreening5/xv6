@@ -130,8 +130,12 @@ sys_settickets(void)
 }
 
 int
-sys_getpinfo(pstat *p)
+sys_getpinfo(void)
 {
+	pstat * p;
+
+	if(argint(0, (int*)&p) < 0)
+		return -1;
 	memmove(p,&pinfo,sizeof(pstat));
 	cprintf("Does this work?\n");
 	return 0;
