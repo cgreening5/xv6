@@ -45,32 +45,6 @@ sys_getpid(void)
   return myproc()->pid;
 }
 
-
-//My implementation of sys_sbrk
-/*
-This implementation should only increment the proc->sz by n bytes & return the old size
-Should NOT allocate memory, deleting growproc, but still need to increase process' size
-*/
-
-int
-sys_sbrk(void)
-{
-	int addr;
-	int n;
-
-	if(argint(0,&n) < 0)
-		return -1;
-	addr = myproc()->sz;
-
-	//if(growproc(n)<0)
-	//	return -1;
-	myproc()->sz += n;
-	
-	return addr;
-}
-
-//Original implementation of sys_sbrk
-/*
 int
 sys_sbrk(void)
 {
@@ -84,8 +58,6 @@ sys_sbrk(void)
     return -1;
   return addr;
 }
-*/
-
 
 int
 sys_sleep(void)
@@ -146,7 +118,6 @@ sys_getpinfo(void)
         if(argint(0, (int*)&p) < 0)
                 return -1;
         memmove(p,&pinfo,sizeof(pstat));
-        cprintf("Does this work?\n");
         return 0;
 }
 

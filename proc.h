@@ -33,7 +33,7 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-
+enum priority { LOW, HIGH };
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -52,6 +52,7 @@ struct proc {
   int lticks;  //ticks executed while on low priority
   int hticks;  //ticks executed while on high priority
   int numtickets;  //number of tickets the process owns
+  enum priority priority;
 };
 
 // Process memory is laid out contiguously, low addresses first:

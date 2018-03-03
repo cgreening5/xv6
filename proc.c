@@ -144,6 +144,7 @@ found:
 
   
   p->numtickets = 1;
+  p->priority = HIGH;
 
   return p;
 }

@@ -89,22 +89,9 @@ trap(struct trapframe *tf)
               tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
     }
-	unsigned int fault_address = rcr2();	
-	if(tf->trapno == T_PGFLT)
-	{
-		char *mem;
-		uint a = PGROUNDDOWN(fault_address);	
-		mem = kalloc();
-		memset(mem, 0, PGSIZE);
-		//cprintf("[Virtual Address: %x][myproc->sz: %d][mem: %x]\n",a, myproc()->sz,mem);
-		mappages(myproc()->pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W|PTE_U);
-  		break;
-	}
+  // In user space, assume process misbehaved.
 
-//  End of my addition
-    // In user space, assume process misbehaved.
-
-    cprintf("pid %d %s: trap %d err %d on cpu %d "
+  cprintf("pid %d %s: trap %d err %d on cpu %d "
             "eip 0x%x addr 0x%x--kill proc\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
