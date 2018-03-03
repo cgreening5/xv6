@@ -11,7 +11,7 @@
 pstat pinfo;
 
 //Variables for a linear congruential PRNG
-int lcgSeed = 45;
+int lcgSeed = 14623;
 int lcgMultiplier = 1103515245;
 int lcgIncrement = 12345;
 uint modulus = 0xFFFFFFFF - 1;
@@ -413,6 +413,8 @@ scheduler(void)
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
+        if (p->state == RUNNING)
+          panic("its still running!");
         c->proc = 0;
 	      break;
       }

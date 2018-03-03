@@ -79,6 +79,7 @@ void printtestdata()
 
 int main()
 {
+  /*
   int p1 = getbusywaiter();
   int p2 = getsleeper();
   printtestdata();
@@ -87,15 +88,24 @@ int main()
   wait();
   kill(p2);
   wait();
-
-  p1 = getproc(1);
-  p2 = getproc(10);
+*/
+  int p1 = getproc(10);
+  int p2 = getproc(1);
+  int p3 = getproc(1);
+  int p4 = getproc(1);
+  int p5 = getproc(1);
   printtestdata();
-  exit();
 
   kill(p1);
   wait();
   kill(p2);
   wait();
+  kill(p3);
+  wait();
+  kill(p4);
+  wait();
+  kill(p5);
+  wait();
+  exit();
 }
 
