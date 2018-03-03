@@ -123,6 +123,7 @@ void            wakeup(void*);
 void            yield(void);
 int		settickets(int);
 int		getpinfo(struct pstat*);
+void resetpriorities();
 
 // swtch.S
 void            swtch(struct context**, struct context*);

@@ -16,6 +16,14 @@ int lcgMultiplier = 1103515245;
 int lcgIncrement = 12345;
 uint modulus = 0xFFFFFFFF - 1;
 
+//Counts the number of slices receieved. Only increments
+//when the CPU gives up the scheduler.
+uint slicecount[NCPU];
+uint numslices[NUM_PRIORITY_VALUES] = {
+  [LOW] 2,
+  [HIGH] 1,
+};
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -54,6 +62,7 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  memset(slicecount, 0, ncpu * sizeof(int));
 }
 
 // Must be called with interrupts disabled
@@ -363,6 +372,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
+  enum priority priority;
 
   for(;;){
     // Enable interrupts on this processor.
@@ -380,9 +390,9 @@ scheduler(void)
       numProc++;
     }
    
-    enum priority priority = HIGH;
+    priority = HIGH;
     int totaltickets = counttickets(priority);
-    if (totaltickets == 0)
+    if (totaltickets == 0) // 
       priority = LOW;
     totaltickets = counttickets(priority);
     
@@ -403,15 +413,12 @@ scheduler(void)
         // before jumping back to us.
         c->proc = p;
         switchuvm(p);
+        slicecount[mycpu()->apicid] = 0;
         p->state = RUNNING;
 
         swtch(&(c->scheduler), p->context);
         switchkvm();
 
-        if (priority == HIGH)
-          p->hticks++;
-        else
-          p->lticks ++;
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -459,8 +466,34 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
-  sched();
+  int cpu  = mycpu()->apicid;
+  slicecount[cpu]++;
+  
+  if (myproc()->priority == HIGH)
+  {
+    myproc()->hticks++;
+  }
+  else
+  {
+    myproc()->lticks++;
+  }
+  if (slicecount[cpu] == numslices[myproc()->priority])
+  {
+    slicecount[cpu] = 0;
+    myproc()->state = RUNNABLE;
+    myproc()->priority = LOW;
+    sched();
+  }
+  release(&ptable.lock);
+}
+
+void resetpriorities()
+{
+  acquire(&ptable.lock);
+  for (int i = 0; i < NPROC; i++)
+  {
+    ptable.proc[i].priority = HIGH;
+  }
   release(&ptable.lock);
 }
 
