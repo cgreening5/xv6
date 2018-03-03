@@ -20,11 +20,13 @@ int main()
 	
 	//success++;
 
-	printf(1, "Inuse   pid     hticks  lticks\n");
+	printf(1, "pid    hticks lticks\n");
 	for(i = 0; i < NPROC; i++)
 	{
-		printf(1,"%d       %d       %d       %d\n",ps->inuse[i],ps->pid[i],ps->hticks[i],ps->lticks[i]);		
-		
+    if (ps->inuse[i])
+    {
+	    printf(1,"%d      %d      %d\n", ps->pid[i],ps->hticks[i],ps->lticks[i]);
+    }
 	}
 
 	exit();

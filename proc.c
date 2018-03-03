@@ -373,11 +373,10 @@ scheduler(void)
     int numProc = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     {
-      pinfo.inuse[numProc] = p->state;
       pinfo.pid[numProc] = p->pid;
-      pinfo.hticks[numProc] = -1;
-      pinfo.lticks[numProc] = -1;
-
+      pinfo.hticks[numProc] = p->hticks;
+      pinfo.lticks[numProc] = p->lticks;
+      pinfo.inuse[numProc] = p->state != UNUSED;
       numProc++;
     }
    
@@ -402,13 +401,20 @@ scheduler(void)
         switchuvm(p);
         p->state = RUNNING;
 
+        int start = ticks;
         swtch(&(c->scheduler), p->context);
         switchkvm();
+        int elapsed = ticks - start;
+
+        if (p->priority == HIGH)
+          p->hticks += elapsed;
+        else
+          p->lticks += elapsed;
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
-	break;
+	      break;
       }
     }
     release(&ptable.lock);

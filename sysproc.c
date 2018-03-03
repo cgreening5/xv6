@@ -113,12 +113,12 @@ int sys_settickets(void)
 int
 sys_getpinfo(void)
 {
-        pstat * p;
+  pstat * p;
 
-        if(argint(0, (int*)&p) < 0)
-                return -1;
-        memmove(p,&pinfo,sizeof(pstat));
-        return 0;
+  if(argint(0, (int*)&p) < 0)
+    return -1;
+  memmove(p,&pinfo,sizeof(pstat));
+  return 0;
 }
 
 //End of assignment 3 additions
