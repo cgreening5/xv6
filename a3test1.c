@@ -6,6 +6,23 @@
 
 #define NUM_SAMPLES 10
 #define SAMPLE_INTERVAL 100
+
+int getproc(int numtickets)
+{
+  int pid = fork();
+  if (pid)
+  {
+    printf(stdout, "PID of proc with %d tickets: %d\n", numtickets, pid);
+  }
+  else
+  {
+    settickets(numtickets);
+    while (1);
+  }
+
+  return pid;
+}
+
 int getbusywaiter()
 {
   int pid = fork();
@@ -40,11 +57,9 @@ int getsleeper()
   return pid;
 }
 
-int main()
+void printtestdata()
 {
   pstat ps;
-  int pid1 = getbusywaiter();
-  int pid2 = getsleeper();
   for (int i = 0; i < NUM_SAMPLES; i++)
   {
     sleep(SAMPLE_INTERVAL);
@@ -59,10 +74,28 @@ int main()
       }
     }
   }
-
-  kill(pid1);
-  wait();
-  kill(pid2);
-  wait();
-  exit();
+  printf(stdout, "End of test.\n\n\n");
 }
+
+int main()
+{
+  int p1 = getbusywaiter();
+  int p2 = getsleeper();
+  printtestdata();
+
+  kill(p1);
+  wait();
+  kill(p2);
+  wait();
+
+  p1 = getproc(1);
+  p2 = getproc(10);
+  printtestdata();
+  exit();
+
+  kill(p1);
+  wait();
+  kill(p2);
+  wait();
+}
+

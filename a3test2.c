@@ -6,38 +6,10 @@
 
 #define NUM_SAMPLES 10
 #define SAMPLE_INTERVAL 100
-int getbusywaiter()
+
+int getproc(int numtickets)
 {
-  int pid = fork();
-  if (pid)
-  {
-    printf(stdout, "PID of busywaiting process: %d\n", pid);
-  }
-  else
-  {
-    while(1);
-  }
 
-  return pid;
-}
-
-int getsleeper()
-{
-  int pid = fork();
-  if (pid)
-  {
-    printf(stdout, "PID of sleeping process: %d\n", pid);
-  }
-  else
-  {
-    while (1)
-    {
-      while (uptime() < 10);
-      sleep(1);
-    }
-  }
-
-  return pid;
 }
 
 int main()
