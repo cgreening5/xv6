@@ -8,14 +8,12 @@
 #include "traps.h"
 #include "spinlock.h"
 
-//Added a declaration of mappages to this file, disabled in vm.cstatic int
-int mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm);
-
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
+int slicecounter = 0;
 
 void
 tvinit(void)
@@ -108,7 +106,19 @@ trap(struct trapframe *tf)
   // If interrupts were on while locks held, would need to check nlock.
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
-    yield();
+  {
+    if (myproc()->priority == HIGH || slicecounter == 1)
+    {
+      slicecounter = 0;
+      myproc()->priority = LOW;
+      yield();
+    }
+    else
+    {
+      slicecounter = 1;
+      myproc()->lticks++;
+    }
+  }
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)

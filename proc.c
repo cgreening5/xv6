@@ -346,11 +346,11 @@ wait(void)
   }
 }
 
-int counttickets()
+int counttickets(enum priority priority)
 {
   int total = 0;
   for (struct proc * p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if (p->state == RUNNABLE){
+    if (p->state == RUNNABLE && p->priority == priority){
       total += p->numtickets;
     }
   }
@@ -380,13 +380,17 @@ scheduler(void)
       numProc++;
     }
    
-    int totaltickets = counttickets();
+    enum priority priority = HIGH;
+    int totaltickets = counttickets(priority);
+    if (totaltickets == 0)
+      priority = LOW;
+    totaltickets = counttickets(priority);
+    
     int winningticket = totaltickets == 0 ? 0 : lcg() % totaltickets;
-
     int count = 0;
 
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE || p->priority != priority)
         continue;
 
       count += p->numtickets;
@@ -401,15 +405,13 @@ scheduler(void)
         switchuvm(p);
         p->state = RUNNING;
 
-        int start = ticks;
         swtch(&(c->scheduler), p->context);
         switchkvm();
-        int elapsed = ticks - start;
 
-        if (p->priority == HIGH)
-          p->hticks += elapsed;
+        if (priority == HIGH)
+          p->hticks++;
         else
-          p->lticks += elapsed;
+          p->lticks ++;
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.

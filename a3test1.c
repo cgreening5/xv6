@@ -49,7 +49,6 @@ int getsleeper()
   {
     while (1)
     {
-      while (uptime() < 10);
       sleep(1);
     }
   }
@@ -79,7 +78,7 @@ void printtestdata()
 
 int main()
 {
-  /*
+
   int p1 = getbusywaiter();
   int p2 = getsleeper();
   printtestdata();
@@ -88,9 +87,9 @@ int main()
   wait();
   kill(p2);
   wait();
-*/
-  int p1 = getproc(10);
-  int p2 = getproc(1);
+  
+  p1 = getproc(10);
+  p2 = getproc(1);
   int p3 = getproc(1);
   int p4 = getproc(1);
   int p5 = getproc(1);
