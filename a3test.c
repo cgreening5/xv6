@@ -9,14 +9,23 @@
 
 int getproc(int numtickets)
 {
+  int pid = fork();
+  if (pid)
+  {
+    printf(stdout, "PID of proc with %d tickets: %d\n", numtickets, pid);
+  }
+  else
+  {
+    settickets(numtickets);
+    while (1);
+  }
 
+  return pid;
 }
 
-int main()
+void printtestdata()
 {
   pstat ps;
-  int pid1 = getbusywaiter();
-  int pid2 = getsleeper();
   for (int i = 0; i < NUM_SAMPLES; i++)
   {
     sleep(SAMPLE_INTERVAL);
@@ -31,10 +40,29 @@ int main()
       }
     }
   }
+  printf(stdout, "End of test.\n\n\n");
+}
 
-  kill(pid1);
+int main()
+{
+
+  int p4 = getproc(10);
+  int p5 = getproc(1);
+  int r6 = getproc(1);
+  int p7 = getproc(1);
+  int p8 = getproc(1);
+  printtestdata();
+
+  kill(p4);
   wait();
-  kill(pid2);
+  kill(p5);
+  wait();
+  kill(p6);
+  wait();
+  kill(p7);
+  wait();
+  kill(p8);
   wait();
   exit();
 }
+

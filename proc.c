@@ -8,6 +8,8 @@
 #include "spinlock.h"
 #include "pstat.h"
 
+#define PRIORITY_RESET_INTERVAL 300
+
 pstat pinfo;
 
 //Variables for a linear congruential PRNG
@@ -36,6 +38,9 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
+
+uint priorityresettimer; 
+uint xticks;
 
 static void wakeup1(void *chan);
 
@@ -389,7 +394,13 @@ scheduler(void)
       pinfo.inuse[numProc] = p->state != UNUSED;
       numProc++;
     }
-   
+
+    if (ticks - priorityresettimer > PRIORITY_RESET_INTERVAL)
+    {
+      resetpriorities();
+      priorityresettimer = ticks;
+    }
+
     priority = HIGH;
     int totaltickets = counttickets(priority);
     if (totaltickets == 0) // 
@@ -415,6 +426,10 @@ scheduler(void)
         switchuvm(p);
         slicecount[mycpu()->apicid] = 0;
         p->state = RUNNING;
+        if (p->priority == HIGH)
+          p->hticks++;
+        else
+          p->lticks++;
 
         swtch(&(c->scheduler), p->context);
         switchkvm();
@@ -469,32 +484,29 @@ yield(void)
   int cpu  = mycpu()->apicid;
   slicecount[cpu]++;
   
-  if (myproc()->priority == HIGH)
-  {
-    myproc()->hticks++;
-  }
-  else
-  {
-    myproc()->lticks++;
-  }
-  if (slicecount[cpu] == numslices[myproc()->priority])
+  //Process used its entire time slice.
+  if (slicecount[cpu] >= numslices[myproc()->priority])
   {
     slicecount[cpu] = 0;
     myproc()->state = RUNNABLE;
     myproc()->priority = LOW;
     sched();
   }
+
+  //Process gets another tick (ie is in low priority and used 1)
+  else
+  {
+    myproc()->lticks++;
+  }
   release(&ptable.lock);
 }
 
 void resetpriorities()
 {
-  acquire(&ptable.lock);
   for (int i = 0; i < NPROC; i++)
   {
     ptable.proc[i].priority = HIGH;
   }
-  release(&ptable.lock);
 }
 
 // A fork child's very first scheduling by scheduler()
