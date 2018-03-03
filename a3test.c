@@ -48,7 +48,7 @@ int main()
 
   int p4 = getproc(10);
   int p5 = getproc(1);
-  int r6 = getproc(1);
+  int p6 = getproc(1);
   int p7 = getproc(1);
   int p8 = getproc(1);
   printtestdata();
