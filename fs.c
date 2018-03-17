@@ -383,11 +383,6 @@ bmap(struct inode *ip, uint bn)
       ip->addrs[bn] = addr = balloc(ip->dev);
     }
 
-    //We're storing the checksum in the first byte, so get rid
-    //of it
-    else if (ip->type = T_CHECKED)
-      addr &= 0x00FFFFFF;
-
     return addr;
   }
   bn -= NDIRECT;
@@ -475,6 +470,8 @@ readi(struct inode *ip, char *dst, uint off, uint n)
   struct buf *bp;
   char checksum;
 
+  int blockaddr;
+
   if(ip->type == T_DEV){
     if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
       return -1;
@@ -487,11 +484,18 @@ readi(struct inode *ip, char *dst, uint off, uint n)
     n = ip->size - off;
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
-    int blockno = off/BSIZE;
-    bp = bread(ip->dev, bmap(ip, blockno));
+    int blockaddr = bmap(ip, off/BSIZE);
+
     if (ip->type == T_CHECKED)
     {
-      if (computechecksum(bp) != ip->addr >> 24)
+      checksum = char(blockaddr >> 24);
+      blockaddr &= 0x00FFFFFF;
+    }
+
+    bp = bread(ip->dev, blockaddr);
+    if (ip->type == T_CHECKED)
+    {
+      if (computechecksum(bp) != checksum)
         panic("File corrupted.");
     }
     m = min(n - tot, BSIZE - off%BSIZE);
@@ -526,6 +530,11 @@ writei(struct inode *ip, char *src, uint off, uint n)
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);
     log_write(bp);
+    if (ip->type == T_CHECKED)
+    {
+      char checksum = computechecksum(bp);
+      inode->ad
+    }
     brelse(bp);
   }
 
