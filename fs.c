@@ -455,7 +455,7 @@ char computechecksum(struct buf * bp)
 {
   char checksum = 0;
   for (int i = 0; i < BSIZE; i++)
-    checksum ^= buf->data[i];
+    checksum ^= bp->data[i];
 
   return checksum;
 }
@@ -468,7 +468,7 @@ readi(struct inode *ip, char *dst, uint off, uint n)
 {
   uint tot, m;
   struct buf *bp;
-  char checksum;
+  char checksum = 0;
 
   int blockaddr;
 
@@ -484,19 +484,24 @@ readi(struct inode *ip, char *dst, uint off, uint n)
     n = ip->size - off;
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
-    int blockaddr = bmap(ip, off/BSIZE);
+    blockaddr = bmap(ip, off/BSIZE);
 
     if (ip->type == T_CHECKED)
     {
-      checksum = char(blockaddr >> 24);
+      checksum = blockaddr >> 24;
+      cprintf("blockaddr: %x. checksum: %x", blockaddr, checksum);
       blockaddr &= 0x00FFFFFF;
+      cprintf(" new blockaddr: %d", blockaddr);
     }
 
     bp = bread(ip->dev, blockaddr);
     if (ip->type == T_CHECKED)
     {
       if (computechecksum(bp) != checksum)
+      {
+        cprintf("Calculated: %x\n", computechecksum(bp));
         panic("File corrupted.");
+      }
     }
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);
@@ -512,7 +517,9 @@ int
 writei(struct inode *ip, char *src, uint off, uint n)
 {
   uint tot, m;
-  struct buf *bp;
+  struct buf *bp, * index;
+  int blockno;
+  char checksum;
 
   if(ip->type == T_DEV){
     if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].write)
@@ -526,19 +533,31 @@ writei(struct inode *ip, char *src, uint off, uint n)
     return -1;
 
   for(tot=0; tot<n; tot+=m, off+=m, src+=m){
-    bp = bread(ip->dev, bmap(ip, off/BSIZE));
+    blockno = off / BSIZE;
+    bp = bread(ip->dev, bmap(ip, blockno));
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);
-    log_write(bp);
     if (ip->type == T_CHECKED)
     {
-      char checksum = computechecksum(bp);
-      inode->ad
+      checksum = computechecksum(bp);
+      if (blockno < NDIRECT)
+      {
+        cprintf("\nAddress: %x\n", ip->addrs[blockno]);
+        ip->addrs[blockno] += checksum << 24;
+        cprintf("Did we clobber the address? %x\n", ip->addrs[blockno]);
+      }
+      else
+      {
+        index = bread(ip->dev, ip->addrs[NDIRECT]);
+        index->data[blockno * sizeof(uint)] = checksum;
+        log_write(index);
+      }
     }
+    log_write(bp);
     brelse(bp);
   }
 
-  if(n > 0 && off > ip->size){
+  if(n > 0 && (off > ip->size || ip->type == T_CHECKED)){
     ip->size = off;
     iupdate(ip);
   }
