@@ -377,8 +377,17 @@ bmap(struct inode *ip, uint bn)
   struct buf *bp;
 
   if(bn < NDIRECT){
+
     if((addr = ip->addrs[bn]) == 0)
+    {
       ip->addrs[bn] = addr = balloc(ip->dev);
+    }
+
+    //We're storing the checksum in the first byte, so get rid
+    //of it
+    else if (ip->type = T_CHECKED)
+      addr &= 0x00FFFFFF;
+
     return addr;
   }
   bn -= NDIRECT;
@@ -447,6 +456,15 @@ stati(struct inode *ip, struct stat *st)
   st->size = ip->size;
 }
 
+char computechecksum(struct buf * bp)
+{
+  char checksum = 0;
+  for (int i = 0; i < BSIZE; i++)
+    checksum ^= buf->data[i];
+
+  return checksum;
+}
+
 //PAGEBREAK!
 // Read data from inode.
 // Caller must hold ip->lock.
@@ -455,6 +473,7 @@ readi(struct inode *ip, char *dst, uint off, uint n)
 {
   uint tot, m;
   struct buf *bp;
+  char checksum;
 
   if(ip->type == T_DEV){
     if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
@@ -468,7 +487,13 @@ readi(struct inode *ip, char *dst, uint off, uint n)
     n = ip->size - off;
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
-    bp = bread(ip->dev, bmap(ip, off/BSIZE));
+    int blockno = off/BSIZE;
+    bp = bread(ip->dev, bmap(ip, blockno));
+    if (ip->type == T_CHECKED)
+    {
+      if (computechecksum(bp) != ip->addr >> 24)
+        panic("File corrupted.");
+    }
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);
     brelse(bp);
@@ -519,7 +544,6 @@ namecmp(const char *s, const char *t)
 {
   return strncmp(s, t, DIRSIZ);
 }
-
 // Look for a directory entry in a directory.
 // If found, set *poff to byte offset of entry.
 struct inode*
