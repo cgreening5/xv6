@@ -489,9 +489,7 @@ readi(struct inode *ip, char *dst, uint off, uint n)
     if (ip->type == T_CHECKED)
     {
       checksum = blockaddr >> 24;
-      cprintf("blockaddr: %x. checksum: %x", blockaddr, checksum);
       blockaddr &= 0x00FFFFFF;
-      cprintf(" new blockaddr: %d", blockaddr);
     }
 
     bp = bread(ip->dev, blockaddr);
@@ -499,7 +497,7 @@ readi(struct inode *ip, char *dst, uint off, uint n)
     {
       if (computechecksum(bp) != checksum)
       {
-        cprintf("Calculated: %x\n", computechecksum(bp));
+        cprintf("Checksum failed: expected %x, got %x\n", computechecksum(bp), checksum);
         panic("File corrupted.");
       }
     }
@@ -518,7 +516,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
 {
   uint tot, m;
   struct buf *bp, * index;
-  int blockno;
+  int bn, blockno;
   char checksum;
 
   if(ip->type == T_DEV){
@@ -533,23 +531,26 @@ writei(struct inode *ip, char *src, uint off, uint n)
     return -1;
 
   for(tot=0; tot<n; tot+=m, off+=m, src+=m){
-    blockno = off / BSIZE;
-    bp = bread(ip->dev, bmap(ip, blockno));
+    bn = off / BSIZE;
+    blockno = bmap(ip, bn);
+    if (ip->type == T_CHECKED)
+    {
+      blockno &= 0x00FFFFFF;
+    }
+    bp = bread(ip->dev, blockno);
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);
     if (ip->type == T_CHECKED)
     {
       checksum = computechecksum(bp);
-      if (blockno < NDIRECT)
+      if (bn < NDIRECT)
       {
-        cprintf("\nAddress: %x\n", ip->addrs[blockno]);
-        ip->addrs[blockno] += checksum << 24;
-        cprintf("Did we clobber the address? %x\n", ip->addrs[blockno]);
+        ip->addrs[bn] = blockno + (checksum << 24);
       }
       else
       {
         index = bread(ip->dev, ip->addrs[NDIRECT]);
-        index->data[blockno * sizeof(uint)] = checksum;
+        index->data[bn * sizeof(uint)] = checksum;
         log_write(index);
       }
     }
@@ -557,9 +558,17 @@ writei(struct inode *ip, char *src, uint off, uint n)
     brelse(bp);
   }
 
-  if(n > 0 && (off > ip->size || ip->type == T_CHECKED)){
-    ip->size = off;
-    iupdate(ip);
+  if(n > 0)
+  {
+    if (off > ip->size)
+    {
+      ip->size = off;
+      iupdate(ip);
+    }
+    else if (ip->type == T_CHECKED)
+    {
+      iupdate(ip);
+    }
   }
   return n;
 }
