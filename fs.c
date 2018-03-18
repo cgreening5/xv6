@@ -482,7 +482,9 @@ stati(struct inode *ip, struct stat *st)
   st->type = ip->type;
   st->nlink = ip->nlink;
   st->size = ip->size;
-  st->checksum = checksumforinode(ip);
+  if (ip->type == T_CHECKED)
+    st->checksum = checksumforinode(ip);
+  else st->checksum = 0;
 }
 
 char computechecksum(struct buf * bp)
