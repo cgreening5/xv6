@@ -14,7 +14,13 @@ int main(int argc, char * argv[])
   }
 
   char * fileName = argv[1];
-  int fd = open(fileName,O_CHECKED | O_RDWR | O_CREATE);
+  int fd = open(fileName, O_RDONLY);
+  if (fd < 0)
+  {
+    printf(2, "Unable to locate file '%s'\n", argv[1]);
+    exit();
+  }
+
   struct stat st;
   
   fstat(fd, &st);
