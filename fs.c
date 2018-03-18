@@ -439,6 +439,33 @@ itrunc(struct inode *ip)
   iupdate(ip);
 }
 
+char checksumforinode(struct inode * ip)
+{
+  char checksum = 0;
+  struct buf * index;
+  for (int i = 0; i < NDIRECT; i++)
+  {
+    if (ip->addrs[i] == 0)
+      return checksum;
+    checksum &= ip->addrs[i] >> 24;
+  }
+
+  if (ip->addrs[NDIRECT] == 0)
+    return checksum;
+
+  index = bread(ip->dev, ip->addrs[NDIRECT]);
+
+  for (int i = 0; i < NDIRECT; i++)
+  {
+    if (index->data[i * sizeof(uint)] == 0)
+      return checksum;
+
+    checksum ^= ip->addrs[i] >> 24;
+  }
+
+  return checksum;
+}
+
 // Copy stat information from inode.
 // Caller must hold ip->lock.
 void
@@ -449,6 +476,7 @@ stati(struct inode *ip, struct stat *st)
   st->type = ip->type;
   st->nlink = ip->nlink;
   st->size = ip->size;
+  st->checksum = checksumforinode(ip);
 }
 
 char computechecksum(struct buf * bp)
@@ -654,7 +682,7 @@ dirlink(struct inode *dp, char *name, uint inum)
 //   skipelem("a", name) = "", setting name = "a"
 //   skipelem("", name) = skipelem("////", name) = 0
 //
-static char*
+static char *
 skipelem(char *path, char *name)
 {
   char *s;
