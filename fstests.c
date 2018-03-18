@@ -25,17 +25,35 @@ void printfstat(int fd)
          (int)st.nlink);
 }
 
+void error(char * mesg)
+{
+  printf(2, "%s\n", mesg);
+  exit();
+}
+
 int main()
 {
+  printf(stdout, "Creating new file.\n");
   int fd = open(FILENAME, O_CHECKED | O_WRONLY | O_CREATE);
+  if (fd < 0)
+    error("Unable to open file.");
   printfstat(fd);
- 
+
+  printf(stdout, "Writing to file.\n");
   char * testmesg = "This is a test."; 
-  write(fd, testmesg, strlen(testmesg));
+  if (write(fd, testmesg, strlen(testmesg)) < 0)
+    error("An error occurred writing to the new file.");
   printfstat(fd);
-  close(fd);
+  
+  printf(stdout, "Closing file.\n");
+  if (close(fd) < 0)
+    error("Unable to close file.");
   printfstat(fd);
-  unlink(FILENAME);
+
+  printf(stdout, "Unlinking file.\n");
+  if (unlink(FILENAME) < 0)
+    error("An error occurred unlinking the file.");
+
   printfstat(fd);
   exit();
 }
