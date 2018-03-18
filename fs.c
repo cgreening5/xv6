@@ -447,7 +447,7 @@ char checksumforinode(struct inode * ip)
   {
     if (ip->addrs[i] == 0)
       return checksum;
-    checksum &= ip->addrs[i] >> 24;
+    checksum ^= ip->addrs[i] >> 24;
   }
 
   if (ip->addrs[NDIRECT] == 0)
