@@ -415,10 +415,16 @@ itrunc(struct inode *ip)
   int i, j;
   struct buf *bp;
   uint *a;
+  uint addr;
 
   for(i = 0; i < NDIRECT; i++){
-    if(ip->addrs[i]){
-      bfree(ip->dev, ip->addrs[i]);
+    addr = ip->addrs[i];
+    if(addr){
+      if (ip->type == T_CHECKED)
+      {
+        addr &= 0x00FFFFFF;
+      }
+      bfree(ip->dev, addr);
       ip->addrs[i] = 0;
     }
   }
