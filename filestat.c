@@ -14,7 +14,7 @@ int main(int argc, char * argv[])
   }
 
   char * fileName = argv[1];
-  int fd = open(fileName,O_CHECKED | O_RDWR);
+  int fd = open(fileName,O_CHECKED | O_RDWR | O_CREATE);
   struct stat st;
   
   fstat(fd, &st);
