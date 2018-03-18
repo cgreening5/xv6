@@ -1,6 +1,8 @@
 #include "types.h"
 #include "user.h"
 #include "stat.h"
+#include "fcntl.h"
+#include "fs.h"
 #define stdout 1
 
 int main(int argc, char * argv[])
