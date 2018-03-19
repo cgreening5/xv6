@@ -453,7 +453,7 @@ char checksumforinode(struct inode * ip)
   {
     if (ip->addrs[i] == 0)
       return checksum;
-    checksum ^= ip->addrs[i] >> 24;
+    checksum ^= ((uint*)ip->addrs)[i] >> 24;
   }
 
   if (ip->addrs[NDIRECT] == 0)
@@ -586,7 +586,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
       else
       {
         index = bread(ip->dev, ip->addrs[NDIRECT]);
-        index->data[bn * sizeof(uint)] = checksum;
+        ((uint*)index->data)[bn - NDIRECT] = blockno + (checksum << 24);
         log_write(index);
       }
     }

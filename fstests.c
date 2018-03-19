@@ -9,7 +9,11 @@
 void printfstat(int fd)
 {
   struct stat st;
-  fstat(fd, &st);
+  if (fstat(fd, &st) < 0)
+  {
+    printf(stdout, "Unable to get file info.\n");
+    return;
+  }
   printf(stdout, "filename: %s\n"
       "checksum: %d\n"
       "type: %d\n"
@@ -33,27 +37,43 @@ void error(char * mesg)
 
 int main()
 {
+  char buffer[BSIZE];
+  
   printf(stdout, "Creating new file.\n");
   int fd = open(FILENAME, O_CHECKED | O_WRONLY | O_CREATE);
-  if (fd < 0)
-    error("Unable to open file.");
   printfstat(fd);
 
   printf(stdout, "Writing to file.\n");
   char * testmesg = "This is a test."; 
-  if (write(fd, testmesg, strlen(testmesg)) < 0)
-    error("An error occurred writing to the new file.");
+
+  //fill buffer with whatever
+  for (int i = 0; i < BSIZE; i++)
+    buffer[i] = 'A';
+
+  for (int i = 0; i <= NDIRECT; i++)
+  {
+    write(fd, testmesg, BSIZE);
+    printf(stdout, "%d blocks written of %d\n", i, NDIRECT);
+  }
   printfstat(fd);
   
   printf(stdout, "Closing file.\n");
   if (close(fd) < 0)
     error("Unable to close file.");
+
+  printf(stdout, "Opening file for reading\n.");
+  fd = open(FILENAME, O_RDONLY);
   printfstat(fd);
 
-  printf(stdout, "Unlinking file.\n");
-  if (unlink(FILENAME) < 0)
-    error("An error occurred unlinking the file.");
+  printf(stdout, "Reading data from file\n");
+  read(fd, buffer, BSIZE);
 
+  if (strcmp(buffer, testmesg) != 0)
+    error("Invalid memory.");
   printfstat(fd);
+
+  close(fd);
+  fd = open(FILENAME, O_WRONLY);
+
   exit();
 }

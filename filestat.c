@@ -26,5 +26,6 @@ int main(int argc, char * argv[])
   fstat(fd, &st);
   printf(stdout, "filename: %s\nchecksum: %d\ntype: %d\nsize: %d\ndevice number: %d\ninode number: %d\nlinks to file: %d\n",
          fileName,(int)st.checksum,(int)st.type,(int)st.size,st.dev,(int)st.ino,(int)st.nlink);
+  close(fd);
   exit();
 }
