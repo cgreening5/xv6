@@ -434,7 +434,10 @@ itrunc(struct inode *ip)
     a = (uint*)bp->data;
     for(j = 0; j < NINDIRECT; j++){
       if(a[j])
-        bfree(ip->dev, a[j]);
+      {
+        addr = a[j] & 0x00FFFFFF;
+        bfree(ip->dev, addr);
+      }
     }
     brelse(bp);
     bfree(ip->dev, ip->addrs[NDIRECT]);
@@ -460,14 +463,13 @@ char checksumforinode(struct inode * ip)
     return checksum;
 
   index = bread(ip->dev, ip->addrs[NDIRECT]);
-
   for (int i = 0; i < NDIRECT; i++)
   {
     if (index->data[i * sizeof(uint)] == 0)
-      return checksum;
-
+      break;
     checksum ^= ip->addrs[i] >> 24;
   }
+  brelse(index); 
 
   return checksum;
 }
@@ -588,6 +590,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
         index = bread(ip->dev, ip->addrs[NDIRECT]);
         ((uint*)index->data)[bn - NDIRECT] = blockno + (checksum << 24);
         log_write(index);
+        brelse(index);
       }
     }
     log_write(bp);

@@ -6,6 +6,8 @@
 #define stdout 1
 #define FILENAME "test.txt"
 
+char buffer[BSIZE];
+
 void printfstat(int fd)
 {
   struct stat st;
@@ -35,10 +37,8 @@ void error(char * mesg)
   exit();
 }
 
-int main()
+void testlargefile()
 {
-  char buffer[BSIZE];
-  
   printf(stdout, "Creating new file.\n");
   int fd = open(FILENAME, O_CHECKED | O_WRONLY | O_CREATE);
   printfstat(fd);
@@ -74,6 +74,32 @@ int main()
 
   close(fd);
   fd = open(FILENAME, O_WRONLY);
+}
 
+void testsmallfile()
+{
+  printf(stdout, "Testing writing to file.\n");
+  char * teststring = "This is a test.";
+  char buffer[strlen(teststring + 1)];
+  int fd = open(FILENAME, O_WRONLY);
+  write(fd, teststring, strlen(teststring));
+  printfstat(fd);
+  close(fd);
+  fd = open(FILENAME, O_RDONLY);
+  read(fd, buffer, strlen(teststring));
+  if (strcmp(teststring, buffer) == 0)
+    printf(stdout, "Success\n.");
+  else
+  {
+    printf(stdout, "Failure: expected %s, found %s", teststring, buffer);
+  } 
+  close(fd);
+  unlink(FILENAME);
+}
+
+int main()
+{
+  testsmallfile();
+  testlargefile(); 
   exit();
 }
