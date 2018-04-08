@@ -91,14 +91,13 @@ sys_uptime(void)
 }
 
 //Make a new thread
-sys_clone(void)
+int sys_clone(void)
 {
-  void(void*fcn)(void*);
+  void(*fcn)(void*);
   void * arg, * stack;
   if (argptr(0, (void*)&fcn, sizeof(fcn)) < 0 ||
-       argptr(1, (void*)arg, sizeof(arg)) < 0 ||
-       argptr(2, (void*)stack, sizeof(stack)) < 0)
+       argptr(1, (void*)&arg, sizeof(arg)) < 0 ||
+       argptr(2, (void*)&stack, sizeof(stack)) < 0)
     return -1;
-  mkthread(fcn, arg, stack);
-
+  return mkthread(fcn, arg, stack);
 }

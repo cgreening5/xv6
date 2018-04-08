@@ -12,6 +12,8 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+struct file * procfiles[NPROC][NOFILE];
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -75,17 +77,19 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
-
+  int i;
   acquire(&ptable.lock);
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == UNUSED)
+  for (i = 0; i < NPROC; i++)
+    if (ptable.proc[i].state == UNUSED)
       goto found;
 
   release(&ptable.lock);
   return 0;
 
 found:
+  p = ptable.proc + i;
+  p->ofile = procfiles[i];
   p->state = EMBRYO;
   p->pid = nextpid++;
 
@@ -535,29 +539,49 @@ procdump(void)
 
 //We're just implementing threads as new processes that share
 //their parents page directories.
-int mkthread(void(void*fcn)(void*), void * arg, void * stack)
+int mkthread(void(*fcn)(void*), void * arg, void * stack)
 {
   struct proc * newthread;
   struct proc * parent = myproc();
 
   //Find an unused process
   acquire(&ptable.lock);  
-  for (newthread = ptable; newthread < &ptable[NPROC]; newthread++)
+  for (newthread = ptable.proc; newthread < &ptable.proc[NPROC]; newthread++)
     if (newthread->state == UNUSED)
+    {
+      newthread->pid = nextpid++; 
       break;
+    }
   release(&ptable.lock); 
-  if (newthread == &ptable[NPROC])
+  if (newthread == &ptable.proc[NPROC])
     return -1;
+
+  if((newthread->kstack = kalloc()) == 0){
+    newthread->state = UNUSED;
+    return 0;
+  }
 
   //Most of this is fairly simple -- just copy from parent
   newthread->sz = parent->sz;  
   newthread->pgdir = parent->pgdir;
-  p->cwd = parent->cwd;
-  p->chan = parent->chan;
-  p->killed = parent->killed;
-  p->file = parent->file;
-  p->name = parent->name;
+  newthread->cwd = parent->cwd;
+  newthread->chan = parent->chan;
+  newthread->killed = parent->killed;
+  newthread->ofile = parent->ofile;
+  newthread->state = RUNNABLE;
+  safestrcpy(newthread->name, "initcode", sizeof(newthread->name));
+  //Push argument onto the stack
+  stack -= sizeof(int);
+  *(int*)stack = 0xFFFFFFFF;
+  stack -= sizeof arg;
+  *(void **)stack = arg;
 
-  //Need to set up the stack so that the thread is executing in 
-  //the given fn
+  //Push trapframe onto the stack
+  stack -= sizeof(newthread->tf);
+  newthread->tf = (struct trapframe *)stack;
+  
+  memset(newthread->tf, 0, sizeof(struct trapframe));
+  newthread->tf->esp = (int)stack;
+  newthread->tf->eip = (int)fcn;
+  return newthread->pid;
 }
