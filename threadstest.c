@@ -9,6 +9,10 @@ void test(void * params)
 
 int main()
 {
-  clone(*test, malloc(512), 0);
+  void * stack = malloc(512);
+  stack += 512;
+  clone(*test, stack, 0);
+  printf(1, "returned\n");
+  while(1);
   exit();
 }

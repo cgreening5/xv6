@@ -543,7 +543,6 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
 {
   struct proc * newthread;
   struct proc * parent = myproc();
-
   //Find an unused process
   acquire(&ptable.lock);  
   for (newthread = ptable.proc; newthread < &ptable.proc[NPROC]; newthread++)
@@ -561,26 +560,30 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
     return 0;
   }
 
+  
   //Most of this is fairly simple -- just copy from parent
   newthread->sz = parent->sz;  
   newthread->pgdir = parent->pgdir;
   newthread->cwd = parent->cwd;
-  newthread->chan = parent->chan;
+  
   newthread->killed = parent->killed;
   newthread->ofile = parent->ofile;
   newthread->state = RUNNABLE;
-  safestrcpy(newthread->name, "initcode", sizeof(newthread->name));
-  //Push argument onto the stack
+  safestrcpy(newthread->name, "child thread", sizeof(newthread->name));
+  
+  //Set up fake return address.
   stack -= sizeof(int);
   *(int*)stack = 0xFFFFFFFF;
+  newthread->tf->ebp = (int) stack;
+  //Push a 
   stack -= sizeof arg;
   *(void **)stack = arg;
-
   //Push trapframe onto the stack
   stack -= sizeof(newthread->tf);
   newthread->tf = (struct trapframe *)stack;
-  
+   
   memset(newthread->tf, 0, sizeof(struct trapframe));
+   
   newthread->tf->esp = (int)stack;
   newthread->tf->eip = (int)fcn;
   return newthread->pid;
