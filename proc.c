@@ -532,3 +532,32 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+//We're just implementing threads as new processes that share
+//their parents page directories.
+int mkthread(void(void*fcn)(void*), void * arg, void * stack)
+{
+  struct proc * newthread;
+  struct proc * parent = myproc();
+
+  //Find an unused process
+  acquire(&ptable.lock);  
+  for (newthread = ptable; newthread < &ptable[NPROC]; newthread++)
+    if (newthread->state == UNUSED)
+      break;
+  release(&ptable.lock); 
+  if (newthread == &ptable[NPROC])
+    return -1;
+
+  //Most of this is fairly simple -- just copy from parent
+  newthread->sz = parent->sz;  
+  newthread->pgdir = parent->pgdir;
+  p->cwd = parent->cwd;
+  p->chan = parent->chan;
+  p->killed = parent->killed;
+  p->file = parent->file;
+  p->name = parent->name;
+
+  //Need to set up the stack so that the thread is executing in 
+  //the given fn
+}
