@@ -599,7 +599,7 @@ int jointhread(void **stack)
 				continue;
 			if(t->parent != p)
 				continue;
-				children = 1; //True
+			children = 1; //True
 			//If the thread is stagnant, reverse everything from mkthread
 			if(t->state == ZOMBIE)
 			{
