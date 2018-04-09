@@ -17,8 +17,8 @@ int thread_create(void (*start_routine)(void *), void * arg)
 int thread_join()
 {
   void * stack;
-  int result;
-  if ((result = join(&stack)) > 0)
+  int result = join(&stack);
+  if (result > 0)
   {
     free(stack);
   }

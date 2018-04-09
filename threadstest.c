@@ -8,20 +8,21 @@ void test(void * params)
 	{
 		printf(1, "Hi from %d\n",(int)params);
 	}
-
-  while(1);
+  exit();
 }
 
 int main()
 {
 	int t1 = 12;
 	int t2 = 7;
+  
   thread_create(&test, (void*)&t1);
   thread_create(&test, (void*)&t2);
 
-	//thread_join();
-	//thread_join();
-  printf(1, "Hello\n");
-  while(1);
+	int pid = thread_join();
+  printf(1, "Cleaned up %d.\n", pid);
+	pid = thread_join();
+  printf(1, "Cleaned up %d.\n", pid);
+  printf(1, "Done.\n");
   exit();
 }

@@ -178,7 +178,10 @@ growproc(int n)
 
   //Need to update the size for each thread in this address space
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    p->sz = sz;
+  {
+    if (p->pgdir == curproc->pgdir)
+       p->sz = sz;
+  }
   switchuvm(curproc);
   release(&growlock);
   return 0;
@@ -291,7 +294,7 @@ wait(void)
     // Scan through table looking for exited children.
     havekids = 0;
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->parent != curproc)
+      if(p->parent != curproc || p->pgdir == curproc->pgdir)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
@@ -565,7 +568,6 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   stack += PGSIZE;
 
   //Push fake return address and arg onto stack
-  
   stack -= sizeof(int);
   *(int*)stack = 0xFFFFFFFF;
   stack -= sizeof(int);
@@ -577,6 +579,9 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   newthread->tf->eax = 0;
   newthread->tf->ebp = (int)stack;
   newthread->tf->eip = (int)fcn;
+
+  newthread->parent = parent;
+  newthread->ustack = stack;
   
   newthread->state = RUNNABLE;
 
@@ -585,9 +590,9 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
 
 int jointhread(void **stack)
 {
-	struct proc *t;
+  struct proc *t;
 	struct proc *p = myproc();
-	int pid, children;
+	int children, pid;
 	//Join must wait on child threads
 	acquire(&ptable.lock);
 	
@@ -605,21 +610,19 @@ int jointhread(void **stack)
 			//If the thread is stagnant, reverse everything from mkthread
 			if(t->state == ZOMBIE)
 			{
-				safestrcpy(t->name,"zombie child thread", sizeof(t->name));
-				pid = t->pid;
+				safestrcpy(t->name,"zombie thread", sizeof(t->name));
+        pid = t->pid;
+        kfree(t->kstack);
 				t->pid = 0;
 				t->state = UNUSED;
 				t->killed = 0;
 				t->parent = 0;
-				//t->ofile = 0
-				//Not sure if we should be free'ing the pgdirectory...
-				//freevm(t->pgdir);
-				stack = (void*)t->kstack;
+        for (int i = 0; i < NOFILE; i++)
+          t->ofile = 0;
+				*stack = (void*)t->ustack;
 				release(&ptable.lock);
 				return pid;
 			}
-			//Otherwise, wait on child threads
-			sleep(p, &ptable.lock);
 		}
 
 		if(p->killed || children == 0)
@@ -627,5 +630,10 @@ int jointhread(void **stack)
 			release(&ptable.lock);
 			return -1;
 		}
+    else
+    {
+			//Otherwise, wait on child threads
+			sleep(p, &ptable.lock);
+    }
 	}
 }
