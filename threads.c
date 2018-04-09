@@ -24,10 +24,16 @@ void lock_release(lock_t *lock)
 
 int thread_create(void (*start_routine)(void *), void * arg)
 {
-  void * stack = malloc(PGSIZE * 2);
-  stack = stack + PGSIZE - ((int)stack % PGSIZE);
-  if (stack == 0)
-    return -1;
+	lock_t lock;
+	lock_init(&lock);
+	lock_acquire(&lock);
+	//Critical section
+	void * stack = malloc(PGSIZE * 2);
+	lock_release(&lock);
+	stack = stack + PGSIZE - ((int)stack % PGSIZE);
+
+	if (stack == 0)
+		return -1;
 
   return clone(start_routine, arg, (void*) stack);
 }
@@ -36,10 +42,16 @@ int thread_join()
 {
   void * stack;
   int result;
-  if ((result = join(&stack)) > 0)
-  {
-    free(stack);
-  }
+	
+	lock_t lock;
+	lock_init(&lock);
+	lock_acquire(&lock);
+	if ((result = join(&stack)) > 0)
+	{
+		//Critical section	
+		free(stack);
+	}
+	lock_release(&lock);
 
   return result;
 }

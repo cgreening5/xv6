@@ -2,26 +2,30 @@
 #include "user.h"
 #include "threads.h"
 
+//lock_t * lock;
+
 void test(void * params)
-{
+{	
 	for(int i = 0; i < 5; i++)
 	{
+		//lock_acquire(lock);
 		printf(1, "Hi from %d\n",(int)params);
+		//lock_release(lock);
 	}
-
-  while(1);
 }
 
 int main()
 {
 	int t1 = 12;
 	int t2 = 7;
-  thread_create(&test, (void*)&t1);
-  thread_create(&test, (void*)&t2);
+	//lock = malloc(sizeof(lock_t));
+	//lock_init(lock);
+	thread_create(&test, (void*)t1);
+	thread_create(&test, (void*)t2);
 
 	//thread_join();
 	//thread_join();
+	//free(lock);
   printf(1, "Hello\n");
-  while(1);
   exit();
 }
