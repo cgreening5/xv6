@@ -121,7 +121,11 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int             mkthread(void(*fcn)(void*), void*, void*);
+<<<<<<< HEAD
 int             join(void ** pid);
+=======
+int		jointhread(void**);
+>>>>>>> join
 
 // swtch.S
 void            swtch(struct context**, struct context*);

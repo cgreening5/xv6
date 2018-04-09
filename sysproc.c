@@ -102,12 +102,12 @@ int sys_clone(void)
   return mkthread(fcn, arg, stack);
 }
 
-//Wait for an old thread
+//Rejoice in the finished threadwork
 int sys_join(void)
 {
-  void * stack;
-  if (argptr(0, (char**)&stack, sizeof(void *)) < 1)
-    return -1;
+	void **stack;
+	if(argptr(0, (void*)&stack, sizeof(stack)) < 0)
+		return -1;
+	return jointhread(stack);
 
-  return join(stack);
 }
