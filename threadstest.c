@@ -4,15 +4,22 @@
 
 void test(void * params)
 {
-  while (1)
-    printf(1, "Hi\n");
-  exit();
+	for(int i = 0; i < 5; i++)
+	{
+		printf(1, "Hi from %d\n",(int)params);
+		
+	}
 }
 
 int main()
 {
-  thread_create(test, 0);
-  while(1)
+	int t1 = 12;
+	int t2 = 7;
+  thread_create(&test, (void*)&t1);
+  thread_create(&test, (void*)&t2);
+
+	thread_join();
+	thread_join();
     printf(1, "Hello\n");
   exit();
 }
