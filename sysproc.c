@@ -101,3 +101,13 @@ int sys_clone(void)
     return -1;
   return mkthread(fcn, arg, stack);
 }
+
+//Rejoice in the finished threadwork
+int sys_join(void)
+{
+	void **stack;
+	if(argptr(0, (void*)&stack, sizeof(stack)) < 0)
+		return -1;
+	return jointhread(stack);
+
+}

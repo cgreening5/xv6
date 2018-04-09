@@ -588,3 +588,50 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   newthread->tf->eip = (int)fcn;
   return newthread->pid;
 }
+
+int jointhread(void **stack)
+{
+	struct proc *t;
+	struct proc *p = myproc();
+	int pid, children;
+	//Join must wait on child threads
+	acquire(&ptable.lock);
+	
+	for(;;)
+	{
+		children = 0; //False
+		for(t = ptable.proc; t < &ptable.proc[NPROC]; t++)
+		{
+			//Check if the page directory is shared, otherwise continue searching the table
+			if(t->pgdir != p->pgdir)
+				continue;
+			if(t->parent != p)
+				continue;
+				children = 1; //True
+			//If the thread is stagnant, reverse everything from mkthread
+			if(t->state == ZOMBIE)
+			{
+				safestrcpy(t->name,"zombie child thread", sizeof(t->name));
+				pid = t->pid;
+				t->pid = 0;
+				t->state = UNUSED;
+				t->killed = 0;
+				t->parent = 0;
+				//t->ofile = 0
+				//Not sure if we should be free'ing the pgdirectory...
+				freevm(t->pgdir);
+				stack = (void*)t->kstack;
+				release(&ptable.lock);
+				return pid;
+			}
+			//Otherwise, wait on child threads
+			sleep(p, &ptable.lock);
+		}
+
+		if(p->killed || children == 0)
+		{
+			release(&ptable.lock);
+			return -1;
+		}
+	}
+}
