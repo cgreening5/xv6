@@ -101,3 +101,13 @@ int sys_clone(void)
     return -1;
   return mkthread(fcn, arg, stack);
 }
+
+//Wait for an old thread
+int sys_join(void)
+{
+  void * stack;
+  if (argptr(0, (char**)&stack, sizeof(void *)) < 1)
+    return -1;
+
+  return join(stack);
+}

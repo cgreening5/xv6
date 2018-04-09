@@ -15,7 +15,7 @@ struct {
 struct file * procfiles[NPROC][NOFILE];
 
 static struct proc *initproc;
-
+static struct spinlock growlock;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -26,6 +26,7 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  initlock(&growlock, "grow");
 }
 
 // Must be called with interrupts disabled
@@ -164,7 +165,8 @@ growproc(int n)
 {
   uint sz;
   struct proc *curproc = myproc();
-
+  struct proc *p;
+  acquire(&growlock);
   sz = curproc->sz;
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
@@ -173,8 +175,12 @@ growproc(int n)
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
   }
-  curproc->sz = sz;
+
+  //Need to update the size for each thread in this address space
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    p->sz = sz;
   switchuvm(curproc);
+  release(&growlock);
   return 0;
 }
 
@@ -573,4 +579,9 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   newthread->state = RUNNABLE;
 
   return newthread->pid;
+}
+
+int join(void ** stack)
+{
+  return 1;
 }
