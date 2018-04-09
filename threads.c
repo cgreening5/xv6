@@ -3,6 +3,24 @@
 #include "threads.h"
 #include "param.h"
 #include "mmu.h"
+#include "x86.h"
+
+int lock_init(lock_t *lock)
+{
+	lock->locked = 0;
+	return 0;
+}
+
+void lock_acquire(lock_t *lock)
+{
+	while(xchg(&lock->locked, 1) != 0);
+		//SPIN.
+}
+
+void lock_release(lock_t *lock)
+{
+	xchg(&lock->locked, 0);
+}
 
 int thread_create(void (*start_routine)(void *), void * arg)
 {
