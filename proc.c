@@ -563,7 +563,8 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   *(int*)stack = 0xFFFFFFFF;
   stack -= sizeof arg;
   *(void **)stack = arg;
-  
+
+  *newthread->tf = *parent->tf;  
   newthread->tf->esp = (int) stack;
   newthread->tf->eax = 0;
   newthread->tf->ebp = (int)stack;
