@@ -568,6 +568,7 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   safestrcpy(newthread->name, "child thread", sizeof(newthread->name));
  
   //Stack should begin at the top of the allocated area
+  newthread->ustack = stack;
   stack += PGSIZE;
 
   //Push fake return address and arg onto stack
@@ -584,7 +585,6 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   newthread->tf->eip = (int)fcn;
 
   newthread->parent = parent;
-  newthread->ustack = stack;
   
   newthread->state = RUNNABLE;
 

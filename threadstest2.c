@@ -15,8 +15,10 @@ int main()
 {
 	int t1 = 12;
 	int t2 = 7;
-  printf(1, "Creating thread %d\n", thread_create(&test, (void*)&t1));
-  printf(1, "Creating thread %d\n", thread_create(&test, (void*)&t2));
+  printf(1, "Creating threads.\n");  
+  thread_create(&test, (void*)&t1);
+  thread_create(&test, (void*)&t2);
+  sleep(100);
   printf(1, "Joining threads.\n");
 	int pid = thread_join();
   printf(1, "Cleaned up %d.\n", pid);
