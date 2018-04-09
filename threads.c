@@ -11,7 +11,7 @@ int thread_create(void (*start_routine)(void *), void * arg)
   if (stack == 0)
     return -1;
 
-  return clone(start_routine, (void*) stack, arg);
+  return clone(start_routine, arg, (void*) stack);
 }
 
 int thread_join()

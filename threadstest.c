@@ -7,8 +7,9 @@ void test(void * params)
 	for(int i = 0; i < 5; i++)
 	{
 		printf(1, "Hi from %d\n",(int)params);
-		
 	}
+
+  while(1);
 }
 
 int main()
@@ -18,8 +19,9 @@ int main()
   thread_create(&test, (void*)&t1);
   thread_create(&test, (void*)&t2);
 
-	thread_join();
-	thread_join();
-    printf(1, "Hello\n");
+	//thread_join();
+	//thread_join();
+  printf(1, "Hello\n");
+  while(1);
   exit();
 }

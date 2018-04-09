@@ -565,10 +565,12 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   stack += PGSIZE;
 
   //Push fake return address and arg onto stack
+  
   stack -= sizeof(int);
   *(int*)stack = 0xFFFFFFFF;
-  stack -= sizeof arg;
+  stack -= sizeof(int);
   *(void **)stack = arg;
+  stack -= sizeof arg;
 
   *newthread->tf = *parent->tf;  
   newthread->tf->esp = (int) stack;
@@ -611,7 +613,7 @@ int jointhread(void **stack)
 				t->parent = 0;
 				//t->ofile = 0
 				//Not sure if we should be free'ing the pgdirectory...
-				freevm(t->pgdir);
+				//freevm(t->pgdir);
 				stack = (void*)t->kstack;
 				release(&ptable.lock);
 				return pid;
