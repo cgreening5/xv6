@@ -543,49 +543,33 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
 {
   struct proc * newthread;
   struct proc * parent = myproc();
-  int ebp;
-  //Find an unused process
-  acquire(&ptable.lock);  
-  for (newthread = ptable.proc; newthread < &ptable.proc[NPROC]; newthread++)
-    if (newthread->state == UNUSED)
-    {
-      newthread->pid = nextpid++; 
-      break;
-    }
-  release(&ptable.lock); 
-  if (newthread == &ptable.proc[NPROC])
+
+  if ((newthread = allocproc()) == 0)
     return -1;
-
-  if((newthread->kstack = kalloc()) == 0){
-    newthread->state = UNUSED;
-    return 0;
-  }
-
   
   //Most of this is fairly simple -- just copy from parent
-  newthread->sz = parent->sz;  
   newthread->pgdir = parent->pgdir;
+  newthread->sz = parent->sz;
   newthread->cwd = parent->cwd;
   newthread->killed = parent->killed;
   newthread->ofile = parent->ofile;
-  newthread->state = RUNNABLE;
   safestrcpy(newthread->name, "child thread", sizeof(newthread->name));
-  
-  //Set up fake return address.
+ 
+  //Stack should begin at the top of the allocated area
+  stack += PGSIZE;
+
+  //Push fake return address and arg onto stack
   stack -= sizeof(int);
   *(int*)stack = 0xFFFFFFFF;
-  
-  //Push argument 
   stack -= sizeof arg;
   *(void **)stack = arg;
-  ebp = (int) stack;
   
-  //Push trapframe onto the stack
-  stack -= sizeof(newthread->tf);
-  newthread->tf = (struct trapframe *)stack;
-  memset(newthread->tf, 0, sizeof(struct trapframe));
-  newthread->tf->ebp = ebp;
-  newthread->tf->esp = (int)stack;
+  newthread->tf->esp = (int) stack;
+  newthread->tf->eax = 0;
+  newthread->tf->ebp = (int)stack;
   newthread->tf->eip = (int)fcn;
+  
+  newthread->state = RUNNABLE;
+
   return newthread->pid;
 }
