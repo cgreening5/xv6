@@ -3,7 +3,8 @@
 
 void test(void * params)
 {
-  printf(1, "Hi\n");
+  while (1)
+    printf(1, "Hi\n");
   exit();
 }
 

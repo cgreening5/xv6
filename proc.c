@@ -543,6 +543,7 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
 {
   struct proc * newthread;
   struct proc * parent = myproc();
+  int ebp;
   //Find an unused process
   acquire(&ptable.lock);  
   for (newthread = ptable.proc; newthread < &ptable.proc[NPROC]; newthread++)
@@ -565,7 +566,6 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   newthread->sz = parent->sz;  
   newthread->pgdir = parent->pgdir;
   newthread->cwd = parent->cwd;
-  
   newthread->killed = parent->killed;
   newthread->ofile = parent->ofile;
   newthread->state = RUNNABLE;
@@ -574,16 +574,17 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
   //Set up fake return address.
   stack -= sizeof(int);
   *(int*)stack = 0xFFFFFFFF;
-  newthread->tf->ebp = (int) stack;
-  //Push a 
+  
+  //Push argument 
   stack -= sizeof arg;
   *(void **)stack = arg;
+  ebp = (int) stack;
+  
   //Push trapframe onto the stack
   stack -= sizeof(newthread->tf);
   newthread->tf = (struct trapframe *)stack;
-   
   memset(newthread->tf, 0, sizeof(struct trapframe));
-   
+  newthread->tf->ebp = ebp;
   newthread->tf->esp = (int)stack;
   newthread->tf->eip = (int)fcn;
   return newthread->pid;
