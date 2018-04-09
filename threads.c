@@ -25,7 +25,6 @@ void lock_release(lock_t *lock)
 int thread_create(void (*start_routine)(void *), void * arg)
 {
   void * stack = malloc(PGSIZE * 2);
-  stack = stack + PGSIZE - ((int)stack % PGSIZE);
   if (stack == 0)
     return -1;
 

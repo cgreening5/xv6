@@ -288,7 +288,7 @@ exit(void)
 int
 wait(void)
 {
-  struct proc *p;
+  struct proc *p, *p2;
   int havekids, pid;
   struct proc *curproc = myproc();
   
@@ -305,7 +305,14 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
+        for (p2 = ptable.proc; p2 < &ptable.proc[NPROC]; p2++)
+        {
+          if (p2->state != UNUSED && p2->pgdir == p->pgdir && p2 != p)
+            break;
+        }
+
+        if (p2 == &ptable.proc[NPROC])
+          freevm(p->pgdir);
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;
@@ -569,7 +576,8 @@ int mkthread(void(*fcn)(void*), void * arg, void * stack)
  
   //Stack should begin at the top of the allocated area
   newthread->ustack = stack;
-  stack += PGSIZE;
+  stack += PGSIZE * 2;
+  stack -= (int) stack % PGSIZE;
 
   //Push fake return address and arg onto stack
   stack -= sizeof(int);

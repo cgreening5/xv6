@@ -11,4 +11,22 @@ Two system calls clone() and join(). Clone creates a new thread -- basically, a 
 
 A threading library, with the methods thread_create() and thread_join(), which take advantage of the above syscall. thread_create() allocates space for a stack and submits the stack in the syscall; thread_join() performs the join() syscall described above, and frees the memory returned.
 
-This probably contains memory leaks.
+How to test
+------------
+Two user test programs have been created. They are fairly similar -- each creates two threads each, allows them to print some output, then has the main thread join() them. In threadstest, the call to join() typically occurs before the threads exit; in threadstest2, a sleep command has been added in order to force main thread to reap the threads after they exit.
+
+New Files
+-------------
+
+threadstest.c -- A new user program which tests creating and reaping threads
+threadstest2.c -- Another user program. Similar, but forces main thread to sleep to ensure that threads exit before join() is called.
+threads.c -- Added threading library.
+
+Modified files
+-------------
+
+defs.h user.h, usys.c, syscall.c, syscall.h, trap.c, sysproc.c -- added standard code to needed for new syscalls clone() and join()
+
+Makefile -- changed to include new user programs and library
+
+

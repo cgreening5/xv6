@@ -18,10 +18,8 @@ int main()
   printf(1, "Creating thread %d\n", thread_create(&test, (void*)&t1));
   printf(1, "Creating thread %d\n", thread_create(&test, (void*)&t2));
   printf(1, "Joining threads.\n");
-	int pid = thread_join();
-  printf(1, "Cleaned up %d.\n", pid);
-	pid = thread_join();
-  printf(1, "Cleaned up %d.\n", pid);
+  //printf(1, "Cleaned up %d.\n", pid);
+  //printf(1, "Cleaned up %d.\n", pid);
   printf(1, "Done.\n");
   exit();
 }
