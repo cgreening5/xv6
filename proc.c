@@ -248,10 +248,13 @@ exit(void)
     panic("init exiting");
 
   // Close all open files.
-  for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd]){
-      fileclose(curproc->ofile[fd]);
-      curproc->ofile[fd] = 0;
+  if (!curproc->parent || curproc->parent->ofile != curproc->ofile)
+  {
+    for(fd = 0; fd < NOFILE; fd++){
+      if(curproc->ofile[fd]){
+        fileclose(curproc->ofile[fd]);
+        curproc->ofile[fd] = 0;
+      }
     }
   }
 
@@ -617,8 +620,6 @@ int jointhread(void **stack)
 				t->state = UNUSED;
 				t->killed = 0;
 				t->parent = 0;
-        for (int i = 0; i < NOFILE; i++)
-          t->ofile = 0;
 				*stack = (void*)t->ustack;
 				release(&ptable.lock);
 				return pid;
